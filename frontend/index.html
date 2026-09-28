@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meeting Memory Agent</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #222;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #ddd;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            height: 90px;
+            resize: vertical;
+        }
+
+        button {
+            background: #222;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🧠 Meeting Memory Agent</h1>
+
+    <p class="subtitle">
+        An AI agent that remembers your meetings and helps you prepare for future conversations.
+    </p>
+
+    <div class="card">
+
+        <h2>Save Meeting</h2>
+
+        <input id="person" placeholder="Person name">
+
+        <input id="company" placeholder="Company">
+
+        <textarea id="discussion"
+                  placeholder="What was discussed?"></textarea>
+
+        <textarea id="action_items"
+                  placeholder="Action items / promises"></textarea>
+
+        <textarea id="preferences"
+                  placeholder="Preferences or important details"></textarea>
+
+        <button onclick="saveMeeting()">
+            Save Meeting
+        </button>
+
+        <div id="saveResult"></div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>Ask Your Memory</h2>
+
+        <textarea id="question"
+                  placeholder="Ask something about your previous meetings..."></textarea>
+
+        <button onclick="askQuestion()">
+            Ask Agent
+        </button>
+
+        <div id="result"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function saveMeeting() {
+
+    const saveResult = document.getElementById("saveResult");
+
+    saveResult.innerText = "Saving...";
+
+    const meeting = {
+        person: document.getElementById("person").value,
+        company: document.getElementById("company").value,
+        discussion: document.getElementById("discussion").value,
+        action_items: document.getElementById("action_items").value,
+        preferences: document.getElementById("preferences").value
+    };
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/save-meeting",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(meeting)
+            }
+        );
+
+        const data = await response.json();
+
+        saveResult.innerText = data.message;
+
+    } catch (error) {
+
+        saveResult.innerText =
+            "Error: " + error.message;
+    }
+}
+
+
+async function askQuestion() {
+
+    const result = document.getElementById("result");
+
+    const question =
+        document.getElementById("question").value;
+
+    if (!question.trim()) {
+        result.innerText = "Please enter a question.";
+        return;
+    }
+
+    result.innerText = "🤖 Thinking...";
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/ask",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: question
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            result.innerText =
+                "Server error: " + JSON.stringify(data);
+            return;
+        }
+
+        result.innerText = data.answer;
+
+    } catch (error) {
+
+        result.innerText =
+            "Connection error: " + error.message;
+    }
+}
+
+</script>
+
+</body>
+</html>
